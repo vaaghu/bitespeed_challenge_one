@@ -15,13 +15,17 @@ enum linkPrecedence {
   secondary
 }
 
-model Contact {
-  id             Int            @id @default(autoincrement())
-  phoneNumber    String?
-  email          String?
-  linkedId       Int?
-  linkPrecedence linkPrecedence @default(primary)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  deletedAt      DateTime?
+model contact {
+  id               Int            @id @default(autoincrement())
+  phoneNumber      String?
+  email            String?
+  // linkedId        Int?
+  linkPrecedence   linkPrecedence @default(primary)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  deletedAt        DateTime?
+  linkedId         contact[]      @relation("id")
+  linkedIdRelation contact[]      @relation("id")
+
+  @@unique([email, phoneNumber])
 }
