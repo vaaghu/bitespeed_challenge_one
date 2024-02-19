@@ -9,15 +9,15 @@ import { UsersService } from './users.service';
 import { IsEmail, IsOptional, IsPhoneNumber } from '@nestjs/class-validator';
 import { Transform } from 'class-transformer';
 
-class CreateUserDto {
+class UserDto {
+  @IsOptional()
   @IsEmail()
   @Transform(({ value }) => value.trim())
-  @IsOptional()
   email?: string;
 
+  @IsOptional()
   @IsPhoneNumber('IN')
   @Transform(({ value }) => value.trim())
-  @IsOptional()
   phoneNumber?: string;
 }
 
@@ -25,13 +25,13 @@ class CreateUserDto {
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
   @Post('/identify')
-  async indentify(@Body() createUserDto: CreateUserDto) {
-    if (!createUserDto?.email && !createUserDto?.phoneNumber) {
+  async indentify(@Body() userDto: UserDto) {
+    if (!userDto?.email && !userDto?.phoneNumber) {
       throw new BadRequestException('Either email or phoneNumber must exist');
     }
     return await this.usersService.indentify(
-      createUserDto?.email,
-      createUserDto?.phoneNumber,
+      userDto?.email,
+      userDto?.phoneNumber,
     );
   }
   @Get()
