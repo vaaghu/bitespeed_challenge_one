@@ -19,6 +19,7 @@ export class UsersService {
             email: email,
             phoneNumber: phoneNumber,
           },
+          select: { email: true, phoneNumber: true, linkedIdRelation: true },
         });
       }
     }
