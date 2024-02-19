@@ -37,6 +37,9 @@ export class UsersService {
       },
     });
   }
+  private async checkPush<T>(arr: Array<T>, value: T) {
+    if (arr.slice(-1)[0] != value) arr.push(value);
+  }
   async indentify(email?: string, phoneNumber?: string) {
     const baseSelect = {
       id: true,
@@ -52,15 +55,15 @@ export class UsersService {
     if (!contact) {
       return await this.add(email, phoneNumber);
     }
-    const secondaryIds = [];
-    const emails = [];
-    const phoneNumbers = [];
+    const secondaryIds: Array<number> = [];
+    const emails: Array<string> = [];
+    const phoneNumbers: Array<string> = [];
     while (contact.linkPrecedence == 'secondary') {
       console.log(contact);
       //lists
-      secondaryIds.push(contact.id);
-      emails.push(contact.email);
-      phoneNumbers.push(contact.phoneNumber);
+      this.checkPush<number>(secondaryIds, contact.id);
+      this.checkPush<string>(emails, contact.email);
+      this.checkPush<string>(phoneNumbers, contact.phoneNumber);
 
       contact = await prisma.contact.findFirst({
         where: {
@@ -69,9 +72,8 @@ export class UsersService {
         select: baseSelect,
       });
     }
-    emails.push(contact.email);
-    phoneNumbers.push(contact.phoneNumber);
-    console.log(contact);
+    this.checkPush<string>(emails, contact.email);
+    this.checkPush<string>(phoneNumbers, contact.phoneNumber);
 
     secondaryIds.reverse();
     emails.reverse();
