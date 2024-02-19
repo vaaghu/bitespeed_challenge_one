@@ -8,13 +8,16 @@ import {
 import { UsersService } from './users.service';
 import { IsEmail, IsOptional, IsPhoneNumber } from '@nestjs/class-validator';
 import { Transform } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 class UserDto {
+  @ApiProperty({ type: String, example: 'vaaghu0@gmail.com' })
   @IsOptional()
   @IsEmail()
   @Transform(({ value }) => value.trim())
   email?: string;
 
+  @ApiProperty({ type: String, example: '9360748965' })
   @IsOptional()
   @IsPhoneNumber('IN')
   @Transform(({ value }) => value.trim())
