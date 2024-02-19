@@ -21,7 +21,7 @@ class UserDto {
   @IsOptional()
   @IsPhoneNumber('IN')
   @Transform(({ value }) => value.trim())
-  phoneNumber?: string;
+  phone_number?: string;
 }
 
 @Controller('users')
@@ -29,12 +29,12 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
   @Post('/identify')
   async indentify(@Body() userDto: UserDto) {
-    if (!userDto?.email && !userDto?.phoneNumber) {
-      throw new BadRequestException('Either email or phoneNumber must exist');
+    if (!userDto?.email && !userDto?.phone_number) {
+      throw new BadRequestException('Either email or phone_number must exist');
     }
     return await this.usersService.indentify(
       userDto?.email,
-      userDto?.phoneNumber,
+      userDto?.phone_number,
     );
   }
   @Get()

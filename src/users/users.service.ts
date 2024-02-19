@@ -3,95 +3,120 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 @Injectable()
 export class UsersService {
-  async add(email: string, phoneNumber: string) {
+  async add(email: string, phone_number: string) {
+    const baseSelect = {
+      id: true,
+      email: true,
+      phone_number: true,
+      linked_id: true,
+      link_precedence: true,
+    };
     let user = await prisma.contact.findFirst({
       where: { email },
-      orderBy: { createdAt: 'desc' },
+      select: { ...baseSelect, created_at: true },
+      orderBy: { created_at: 'desc' },
+    });
+    const userPhone = await prisma.contact.findFirst({
+      where: { phone_number },
+      include: { linked: true },
+      orderBy: { created_at: 'desc' },
     });
     if (!user) {
-      user = await prisma.contact.findFirst({
-        where: { phoneNumber },
-        orderBy: { createdAt: 'desc' },
-      });
-      if (!user) {
+      if (!userPhone) {
         return await prisma.contact.create({
           data: {
             email: email,
-            phoneNumber: phoneNumber,
+            phone_number: phone_number,
           },
-          select: { email: true, phoneNumber: true, linkedIdRelation: true },
+          select: baseSelect,
         });
       }
+      user = userPhone;
+    } else if (user && userPhone) {
+      if (user.created_at < userPhone.created_at) {
+        await prisma.contact.update({
+          data: {
+            link_precedence: 'secondary',
+            linked: { connect: { id: user.id } },
+          },
+          include: { linked: true },
+          where: { id: userPhone.id },
+        });
+        return await this.indentify(userPhone.email, userPhone.phone_number);
+      }
+      await prisma.contact.update({
+        data: {
+          link_precedence: 'secondary',
+          linked: { connect: { id: userPhone.id } },
+        },
+        include: { linked: true },
+        where: { id: user.id },
+      });
+      return await this.indentify(user.email, user.phone_number);
     }
 
     return await prisma.contact.create({
       data: {
         email: email,
-        phoneNumber: phoneNumber,
-        linkPrecedence: 'secondary',
-        linkedId: { connect: { id: user.id } },
+        phone_number: phone_number,
+        link_precedence: 'secondary',
+        linked: { connect: { id: user.id } },
       },
-      select: {
-        email: true,
-        phoneNumber: true,
-        linkPrecedence: true,
-      },
+      select: baseSelect,
     });
   }
   private async checkPush<T>(arr: Array<T>, value: T) {
     if (arr.slice(-1)[0] != value) arr.push(value);
   }
-  async indentify(email?: string, phoneNumber?: string) {
+  async indentify(email?: string, phone_number?: string) {
     const baseSelect = {
       id: true,
       email: true,
-      phoneNumber: true,
-      linkPrecedence: true,
-      linkedId: { select: { id: true } },
+      phone_number: true,
+      link_precedence: true,
+      linked: { select: { id: true } },
     };
     let contact = await prisma.contact.findFirst({
-      where: { email, phoneNumber },
+      where: { email, phone_number },
       select: baseSelect,
     });
     if (!contact) {
-      return await this.add(email, phoneNumber);
+      return await this.add(email, phone_number);
     }
     const secondaryIds: Array<number> = [];
     const emails: Array<string> = [];
-    const phoneNumbers: Array<string> = [];
-    while (contact.linkPrecedence == 'secondary') {
-      console.log(contact);
+    const phone_numbers: Array<string> = [];
+    while (contact.link_precedence == 'secondary') {
       //lists
       this.checkPush<number>(secondaryIds, contact.id);
       this.checkPush<string>(emails, contact.email);
-      this.checkPush<string>(phoneNumbers, contact.phoneNumber);
-
+      this.checkPush<string>(phone_numbers, contact.phone_number);
       contact = await prisma.contact.findFirst({
         where: {
-          id: contact.linkedId[0].id,
+          id: contact.linked.id,
         },
         select: baseSelect,
       });
     }
     this.checkPush<string>(emails, contact.email);
-    this.checkPush<string>(phoneNumbers, contact.phoneNumber);
+    this.checkPush<string>(phone_numbers, contact.phone_number);
 
     secondaryIds.reverse();
     emails.reverse();
-    phoneNumbers.reverse();
+    phone_numbers.reverse();
 
     return {
       contact: {
         primaryContatctId: contact.id,
         emails,
-        phoneNumbers,
+        phone_numbers,
         secondaryIds,
       },
     };
   }
   async getAll() {
     return await prisma.contact.findMany({
-      select: { id: true, email: true, phoneNumber: true },
+      select: { id: true, email: true, phone_number: true },
     });
   }
 }

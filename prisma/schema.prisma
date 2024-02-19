@@ -16,16 +16,16 @@ enum linkPrecedence {
 }
 
 model contact {
-  id               Int            @id @default(autoincrement())
-  phoneNumber      String?
-  email            String?
-  // linkedId        Int?
-  linkPrecedence   linkPrecedence @default(primary)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  deletedAt        DateTime?
-  linkedId         contact[]      @relation("id")
-  linkedIdRelation contact[]      @relation("id")
+  id                 Int            @id @default(autoincrement())
+  phone_number       String?
+  email              String?
+  link_precedence    linkPrecedence @default(primary)
+  created_at         DateTime       @default(now())
+  updated_at         DateTime       @updatedAt
+  deleted_at         DateTime?
+  linked             contact?       @relation("id", fields: [linked_id], references: [id])
+  linked_id_relation contact[]      @relation("id")
+  linked_id          Int?
 
-  @@unique([email, phoneNumber])
+  @@unique([email, phone_number])
 }
