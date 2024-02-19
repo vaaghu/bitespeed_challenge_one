@@ -30,14 +30,24 @@ export class UsersService {
         linkPrecedence: 'secondary',
         linkedId: { connect: { id: user.id } },
       },
+      select: {
+        email: true,
+        phoneNumber: true,
+        linkPrecedence: true,
+      },
     });
   }
   async indentify(email?: string, phoneNumber?: string) {
-    let contact: any = await prisma.contact.findFirst({
+    const baseSelect = {
+      id: true,
+      email: true,
+      phoneNumber: true,
+      linkPrecedence: true,
+      linkedId: { select: { id: true } },
+    };
+    let contact = await prisma.contact.findFirst({
       where: { email, phoneNumber },
-      include: {
-        linkedId: { take: 1, include: { linkedId: true } },
-      },
+      select: baseSelect,
     });
     if (!contact) {
       return await this.add(email, phoneNumber);
@@ -45,12 +55,19 @@ export class UsersService {
     const secondaryIds = [];
     const emails = [];
     const phoneNumbers = [];
-    while (contact.linkedId) {
+    while (contact.linkPrecedence == 'secondary') {
+      console.log(contact);
+      //lists
       secondaryIds.push(contact.id);
       emails.push(contact.email);
       phoneNumbers.push(contact.phoneNumber);
-      console.log(contact);
-      contact = contact.linkedId[0];
+
+      contact = await prisma.contact.findFirst({
+        where: {
+          id: contact.linkedId[0].id,
+        },
+        select: baseSelect,
+      });
     }
     emails.push(contact.email);
     phoneNumbers.push(contact.phoneNumber);
