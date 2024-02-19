@@ -26,6 +26,8 @@ $ pnpm run start:dev
 $ pnpm run start:prod
 ```
 
+###Server link
+[https://bitesspeed.onrender.com](https://bitesspeed.onrender.com)
 ##Routes
 
 - /api => swagger
